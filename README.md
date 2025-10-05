@@ -64,6 +64,190 @@ swipe-interview-backend/
 - `POST /api/auth/signup` - Register a new candidate
 - `POST /api/auth/login` - Login and get access token
 
+## API Reference (request & response examples)
+
+Below are concrete request and response examples you can use as context when building a frontend or passing to an LLM. Replace `{{BASE_URL}}` with `http://localhost:8000` when running locally.
+
+### 1) Signup
+POST /api/auth/signup
+
+Request (application/json)
+
+```json
+{
+   "name": "John Doe",
+   "email": "john@example.com",
+   "phone": "1234567890",
+   "password": "yourpassword"
+}
+```
+
+Successful response (201 / application/json)
+
+```json
+{
+   "id": 1,
+   "name": "John Doe",
+   "email": "john@example.com",
+   "phone": "1234567890",
+   "resume_text": null
+}
+```
+
+Error response (400)
+
+```json
+{ "detail": "Email already registered" }
+```
+
+### 2) Login
+POST /api/auth/login
+
+Request (application/json)
+
+```json
+{
+   "email": "john@example.com",
+   "password": "yourpassword"
+}
+```
+
+Successful response (200 / application/json)
+
+```json
+{
+   "access_token": "<jwt-token-string>",
+   "token_type": "bearer"
+}
+```
+
+Error response (401)
+
+```json
+{ "detail": "Invalid credentials" }
+```
+
+### 3) Get Candidate Profile
+GET /api/candidate/profile
+
+Headers:
+- Authorization: Bearer <access_token>
+
+Successful response (200 / application/json)
+
+```json
+{
+   "id": 1,
+   "name": "John Doe",
+   "email": "john@example.com",
+   "phone": "1234567890",
+   "resume_text": "...extracted resume text..."
+}
+```
+
+Error response (401)
+
+```json
+{ "detail": "Invalid token" }
+```
+
+### 4) Upload Resume
+POST /api/candidate/upload_resume
+
+Headers:
+- Authorization: Bearer <access_token>
+- Content-Type: multipart/form-data
+
+Form payload:
+- file: (binary) resume.pdf or resume.docx
+
+Successful response (200 / application/json)
+
+```json
+{
+   "id": 1,
+   "name": "John Doe",
+   "email": "john@example.com",
+   "phone": "1234567890",
+   "resume_text": "Extracted text from uploaded resume..."
+}
+```
+
+Error response (400)
+
+```json
+{ "detail": "Invalid file type" }
+```
+
+### 5) Start Interview
+POST /api/interview/start
+
+Headers:
+- Authorization: Bearer <access_token>
+
+Request: no body required
+
+Successful response (200 / application/json)
+
+```json
+{
+   "interview_id": 1,
+   "next_question": {
+      "question": "Explain the difference between threads and processes.",
+      "difficulty": "medium"
+   }
+}
+```
+
+Error response (401)
+
+```json
+{ "detail": "Invalid token" }
+```
+
+### 6) Submit Answer
+POST /api/interview/answer
+
+Headers:
+- Authorization: Bearer <access_token>
+- Content-Type: application/json
+
+Request (application/json)
+
+```json
+{
+   "answer": "Threads share memory while processes do not; threads are lighter weight..."
+}
+```
+
+Possible successful response when not finished (200)
+
+```json
+{
+   "next_question": {
+      "question": "Describe how a hash table handles collisions.",
+      "difficulty": "hard"
+   }
+}
+```
+
+Possible successful response when interview completes (200)
+
+```json
+{
+   "message": "Interview completed",
+   "score": 45,
+   "summary": "Candidate performed well with total score 45."
+}
+```
+
+Error responses
+
+```json
+{ "detail": "Active interview not found" }
+```
+
+
 ### Candidate Management
 - `GET /api/candidate/profile` - Get candidate profile (auth required)
 - `POST /api/candidate/upload_resume` - Upload resume (auth required)
