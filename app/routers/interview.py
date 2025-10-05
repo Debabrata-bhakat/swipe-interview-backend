@@ -6,6 +6,7 @@ from app.utils.ai_utils import generate_question, evaluate_answer
 from app.routers.candidate import get_current_candidate  # import auth dependency
 
 router = APIRouter()
+TOTAL_QUESTIONS = 6
 
 @router.post("/start")
 def start_interview(
@@ -21,7 +22,13 @@ def start_interview(
     db.commit()
     db.refresh(interview)
 
-    return {"interview_id": interview.id, "next_question": first_q}
+    # return counts to help the frontend show progress
+    return {
+        "interview_id": interview.id,
+        "next_question": first_q,
+        "questions_done": 0,
+        "total_questions": TOTAL_QUESTIONS,
+    }
 
 @router.post("/answer")
 def submit_answer(
@@ -54,6 +61,10 @@ def submit_answer(
     interview.qa_pairs = list(qa_pairs)
     flag_modified(interview, "qa_pairs")  # <-- explicitly mark as modified
 
+    # compute progress after recording the answer
+    questions_done = len(qa_pairs)
+    total_questions = TOTAL_QUESTIONS
+
     # Finalize if 6 questions are present
     if len(qa_pairs) == 6:
         if all(q.get("answer") for q in qa_pairs):
@@ -63,16 +74,26 @@ def submit_answer(
             flag_modified(interview, "qa_pairs")  # mark again if changed
             db.commit()
             db.refresh(interview)
-            return {"message": "Interview completed", "score": interview.score, "summary": interview.summary}
+            return {
+                "message": "Interview completed",
+                "score": interview.score,
+                "summary": interview.summary,
+                "questions_done": questions_done,
+                "total_questions": total_questions,
+            }
         else:
             flag_modified(interview, "qa_pairs")
             db.commit()
             db.refresh(interview)
-            return {"message": "Interview completed"}
+            return {
+                "message": "Interview completed",
+                "questions_done": questions_done,
+                "total_questions": total_questions,
+            }
 
-    # Otherwise, generate next question only if less than 6
+    # Otherwise, generate next question only if less than TOTAL_QUESTIONS
     next_index = len(qa_pairs)
-    if next_index < 6:
+    if next_index < total_questions:
         next_q = generate_question(next_index)
         qa_pairs.append(next_q)
         interview.qa_pairs = list(qa_pairs)
@@ -80,6 +101,10 @@ def submit_answer(
         print(f"inside next question block, interview: {interview}")
         db.commit()
         db.refresh(interview)
-        return {"next_question": next_q}
+        return {
+            "next_question": next_q,
+            "questions_done": questions_done,
+            "total_questions": total_questions,
+        }
 
-    return {"message": "Interview completed"}
+    return {"message": "Interview completed", "questions_done": questions_done, "total_questions": total_questions}

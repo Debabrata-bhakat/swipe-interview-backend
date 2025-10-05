@@ -189,13 +189,16 @@ Request: no body required
 
 Successful response (200 / application/json)
 
+
 ```json
 {
    "interview_id": 1,
    "next_question": {
       "question": "Explain the difference between threads and processes.",
       "difficulty": "medium"
-   }
+   },
+   "questions_done": 0,
+   "total_questions": 6
 }
 ```
 
@@ -222,22 +225,28 @@ Request (application/json)
 
 Possible successful response when not finished (200)
 
+
 ```json
 {
    "next_question": {
       "question": "Describe how a hash table handles collisions.",
       "difficulty": "hard"
-   }
+   },
+   "questions_done": 2,
+   "total_questions": 6
 }
 ```
 
 Possible successful response when interview completes (200)
 
+
 ```json
 {
    "message": "Interview completed",
    "score": 45,
-   "summary": "Candidate performed well with total score 45."
+   "summary": "Candidate performed well with total score 45.",
+   "questions_done": 6,
+   "total_questions": 6
 }
 ```
 
