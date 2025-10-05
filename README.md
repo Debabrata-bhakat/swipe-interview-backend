@@ -4,9 +4,9 @@ This is the backend service for the Swipe AI Interview Assistant, built with Fas
 
 ## Features
 
-- User authentication and authorization using JWT tokens
-- Candidate management system
-- RESTful API endpoints
+- JWT-based authentication and authorization
+- Candidate management (signup, login, profile, resume upload)
+- Interview session management with AI-generated questions
 - SQLite database integration
 - Password hashing with bcrypt
 
@@ -18,15 +18,15 @@ This is the backend service for the Swipe AI Interview Assistant, built with Fas
 ## Installation
 
 1. Clone the repository:
-```bash
-git clone <repository-url>
-cd swipe-interview-backend
-```
+    ```bash
+    git clone <repository-url>
+    cd swipe-interview-backend
+    ```
 
 2. Install the required packages:
-```bash
-pip install -r requirement.txt
-```
+    ```bash
+    pip install -r requirement.txt
+    ```
 
 ## Environment Setup
 
@@ -44,26 +44,35 @@ swipe-interview-backend/
 ├── app/
 │   ├── routers/
 │   │   ├── auth.py         # Authentication routes
-│   │   └── candidate.py    # Candidate management routes
-│   ├── auth.py            # Authentication utilities
-│   ├── crud.py           # Database CRUD operations
-│   ├── database.py       # Database configuration
-│   ├── main.py          # FastAPI application setup
-│   ├── models.py        # SQLAlchemy models
-│   └── schemas.py       # Pydantic models/schemas
-├── requirement.txt      # Project dependencies
+│   │   ├── candidate.py    # Candidate management routes
+│   │   └── interview.py    # Interview session routes
+│   ├── auth.py             # Authentication utilities
+│   ├── crud.py             # Database CRUD operations
+│   ├── database.py         # Database configuration
+│   ├── main.py             # FastAPI application setup
+│   ├── models.py           # SQLAlchemy models
+│   ├── schemas.py          # Pydantic models/schemas
+│   └── utils/
+│       └── ai_utils.py     # AI question generation and evaluation
+├── requirement.txt         # Project dependencies
 └── README.md
 ```
 
 ## API Endpoints
 
 ### Authentication
-- `POST /api/auth/token` - Get access token
-- `GET /api/auth/me` - Get current user info
+- `POST /api/auth/signup` - Register a new candidate
+- `POST /api/auth/login` - Login and get access token
 
 ### Candidate Management
-- `POST /api/candidate/` - Create new candidate
-- `GET /api/candidate/me` - Get candidate profile
+- `GET /api/candidate/profile` - Get candidate profile (auth required)
+- `POST /api/candidate/upload_resume` - Upload resume (auth required)
+
+### Interview Flow
+- `POST /api/interview/start` - Start a new interview session (auth required)
+- `POST /api/interview/answer` - Submit answer to current interview question (auth required)
+
+> **Note:** All interview endpoints require a Bearer token in the `Authorization` header.
 
 ## Running the Application
 
@@ -74,11 +83,49 @@ uvicorn app.main:app --reload
 
 The API will be available at `http://localhost:8000`
 
-API documentation (provided by Swagger UI) will be available at `http://localhost:8000/docs`
+API documentation (Swagger UI) is available at `http://localhost:8000/docs`
 
 ## Database
 
 The project uses SQLite as the database. The database file `swipe_interview.db` will be created automatically when you first run the application.
+
+## Usage Example
+
+1. **Signup:**  
+   `POST /api/auth/signup` with JSON body:
+   ```json
+   {
+     "name": "John Doe",
+     "email": "john@example.com",
+     "phone": "1234567890",
+     "password": "yourpassword"
+   }
+   ```
+
+2. **Login:**  
+   `POST /api/auth/login` with JSON body:
+   ```json
+   {
+     "email": "john@example.com",
+     "password": "yourpassword"
+   }
+   ```
+   Response will include an `access_token`.
+
+3. **Authenticated Requests:**  
+   Add header:  
+   `Authorization: Bearer <access_token>`
+
+4. **Start Interview:**  
+   `POST /api/interview/start` (no body needed, just auth header)
+
+5. **Answer Interview Question:**  
+   `POST /api/interview/answer` with JSON body:
+   ```json
+   {
+     "answer": "Your answer here"
+   }
+   ```
 
 ## Contributing
 
