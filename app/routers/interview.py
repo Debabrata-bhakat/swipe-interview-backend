@@ -30,6 +30,44 @@ def start_interview(
         "total_questions": TOTAL_QUESTIONS,
     }
 
+@router.get("/status")
+def get_interview_status(
+    db: Session = Depends(database.get_db),
+    candidate: models.Candidate = Depends(get_current_candidate)
+):
+    interview = (
+        db.query(models.Interview)
+        .filter(models.Interview.candidate_id == candidate.id)
+        .order_by(models.Interview.id.desc())
+        .first()
+    )
+    if not interview:
+        raise HTTPException(status_code=404, detail="Interview not found")
+
+    qa_pairs = interview.qa_pairs
+    # Find the first question that hasn't been answered yet
+    current_question = next((i for i, q in enumerate(qa_pairs) 
+                           if "answer" not in q or not q["answer"].strip()), 0)
+    
+    # If all questions are answered, point to the last question
+    if all(q.get("answer", "").strip() for q in qa_pairs):
+        current_question = len(qa_pairs) - 1
+    
+    total_questions = TOTAL_QUESTIONS
+    
+    print(f"Status check - Current question: {current_question}")
+    print(f"Status check - Questions with answers: {[i for i, q in enumerate(qa_pairs) if q.get('answer', '').strip()]}")
+
+    return {
+        "interview_id": interview.id,
+        "status": interview.status,
+        "score": interview.score,
+        "summary": interview.summary,
+        "qa_pairs": qa_pairs,
+        "current_question": current_question,
+        "total_questions": total_questions,
+    }
+
 @router.post("/answer")
 def submit_answer(
     req: schemas.AnswerRequest,
@@ -91,20 +129,23 @@ def submit_answer(
                 "total_questions": total_questions,
             }
 
-    # Otherwise, generate next question only if less than TOTAL_QUESTIONS
-    next_index = len(qa_pairs)
-    if next_index < total_questions:
-        next_q = generate_question(next_index)
+    # Generate next question if needed
+    if len(qa_pairs) < total_questions:
+        next_q = generate_question(len(qa_pairs))
         qa_pairs.append(next_q)
         interview.qa_pairs = list(qa_pairs)
         flag_modified(interview, "qa_pairs")
-        print(f"inside next question block, interview: {interview}")
         db.commit()
         db.refresh(interview)
         return {
             "next_question": next_q,
-            "questions_done": questions_done,
+            "questions_done": len(qa_pairs) - 1,  # -1 because we just added a new question
             "total_questions": total_questions,
         }
 
-    return {"message": "Interview completed", "questions_done": questions_done, "total_questions": total_questions}
+    # If we have all questions but not all answered
+    return {
+        "message": "Continue answering",
+        "questions_done": len(questions_with_answers),
+        "total_questions": total_questions,
+    }
