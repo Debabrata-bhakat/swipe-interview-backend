@@ -45,18 +45,30 @@ def get_interview_status(
         raise HTTPException(status_code=404, detail="Interview not found")
 
     qa_pairs = interview.qa_pairs
-    # Find the first question that hasn't been answered yet
-    current_question = next((i for i, q in enumerate(qa_pairs) 
-                           if "answer" not in q or not q["answer"].strip()), 0)
     
-    # If all questions are answered, point to the last question
-    if all(q.get("answer", "").strip() for q in qa_pairs):
+    # Find all questions that have been attempted (have an 'answer' field)
+    attempted_indices = [i for i, q in enumerate(qa_pairs) if "answer" in q]
+    
+    # If we have attempted questions, current_question should be the next one
+    # If no questions attempted, start at 0
+    current_question = (max(attempted_indices) + 1) if attempted_indices else 0
+    
+    # Don't exceed the last question index
+    if current_question >= len(qa_pairs):
         current_question = len(qa_pairs) - 1
     
     total_questions = TOTAL_QUESTIONS
     
-    print(f"Status check - Current question: {current_question}")
-    print(f"Status check - Questions with answers: {[i for i, q in enumerate(qa_pairs) if q.get('answer', '').strip()]}")
+    print(f"Status check - Attempted questions: {attempted_indices}")
+    print(f"Status check - Next question to attempt: {current_question}")
+    
+    print(f"Status check - Total questions in qa_pairs: {len(qa_pairs)}")
+    print(f"Status check - Questions attempted (including empty): {current_question}")
+    print(f"Status check - Current question index: {current_question}")
+    
+    print(f"Status check - Questions with any answer: {[i for i, q in enumerate(qa_pairs) if 'answer' in q]}")
+    print(f"Status check - Questions with non-empty answers: {[i for i, q in enumerate(qa_pairs) if q.get('answer', '').strip()]}")
+    print(f"Status check - Current question index: {current_question}")
 
     return {
         "interview_id": interview.id,
@@ -86,15 +98,18 @@ def submit_answer(
         raise HTTPException(status_code=404, detail="Active interview not found")
 
     qa_pairs = interview.qa_pairs
-    current_index = len([q for q in qa_pairs if q.get("answer")])  # count answered
-    print(f"interview: {interview}")
-    print(f"current_index: {current_index}, len(qa_pairs): {len(qa_pairs)}")
-    print(f"qa pairs: {qa_pairs}")
-    if current_index >= len(qa_pairs):
-        current_index = len(qa_pairs) - 1
-
+    # Find the first question without any answer attempt
+    current_index = next((i for i, q in enumerate(qa_pairs) if "answer" not in q), len(qa_pairs) - 1)
+    
+    print(f"Submitting answer for question {current_index}")
+    print(f"Current qa_pairs state: {qa_pairs}")
+    
+    # Record the answer attempt
     qa_pairs[current_index]["answer"] = answer
-    qa_pairs[current_index]["score"] = evaluate_answer(answer, qa_pairs[current_index]["difficulty"])
+    if answer.strip():
+        qa_pairs[current_index]["score"] = evaluate_answer(answer, qa_pairs[current_index]["difficulty"])
+    else:
+        qa_pairs[current_index]["score"] = 0
 
     interview.qa_pairs = list(qa_pairs)
     flag_modified(interview, "qa_pairs")  # <-- explicitly mark as modified
@@ -144,8 +159,9 @@ def submit_answer(
         }
 
     # If we have all questions but not all answered
+    answered_count = len([q for q in qa_pairs if q.get("answer", "").strip()])
     return {
         "message": "Continue answering",
-        "questions_done": len(questions_with_answers),
+        "questions_done": answered_count,
         "total_questions": total_questions,
     }
