@@ -133,6 +133,7 @@ def submit_answer(
                 "summary": interview.summary,
                 "questions_done": questions_done,
                 "total_questions": total_questions,
+                "qa_pairs": qa_pairs,
             }
         else:
             flag_modified(interview, "qa_pairs")
@@ -142,6 +143,7 @@ def submit_answer(
                 "message": "Interview completed",
                 "questions_done": questions_done,
                 "total_questions": total_questions,
+                "qa_pairs": qa_pairs,
             }
 
     # Generate next question if needed
