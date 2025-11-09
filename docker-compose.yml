@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: swipe-interview-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      # Mount app directory for hot reload during development
+      - ./app:/app/app
+      # Persist SQLite database
+      - ./swipe_interview.db:/app/swipe_interview.db
+      # Optional: Mount .env file if you create one
+      # - ./.env:/app/.env
+    environment:
+      # Override these in .env file or here
+      - SECRET_KEY=${SECRET_KEY:-YOUR_SECRET_KEY}
+      - ALGORITHM=${ALGORITHM:-HS256}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}
+    # Override CMD for development with hot reload
+    command: python -m uvicorn app.main:app --host 0.0.0.0 --port 8080 --reload
+    restart: unless-stopped
+    networks:
+      - swipe-network
+
+  # Uncomment if you want to add frontend container
+  # frontend:
+  #   build:
+  #     context: ../swipe-interview-frontend
+  #     dockerfile: Dockerfile
+  #   container_name: swipe-interview-frontend
+  #   ports:
+  #     - "5173:5173"
+  #   volumes:
+  #     - ../swipe-interview-frontend/src:/app/src
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - swipe-network
+
+networks:
+  swipe-network:
+    driver: bridge
