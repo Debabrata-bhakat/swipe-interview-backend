@@ -20,4 +20,10 @@ def login(candidate: schemas.CandidateLogin, db: Session = Depends(database.get_
     if not db_candidate or not auth.verify_password(candidate.password, db_candidate.hashed_password):
         raise HTTPException(status_code=401, detail="Invalid credentials")
     token = auth.create_access_token({"sub": db_candidate.email})
-    return {"access_token": token, "token_type": "bearer"}
+    return {
+        "access_token": token, 
+        "token_type": "bearer",
+        "role": db_candidate.role if hasattr(db_candidate, 'role') else "interviewee",
+        "name": db_candidate.name,
+        "email": db_candidate.email
+    }

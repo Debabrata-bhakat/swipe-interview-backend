@@ -6,6 +6,7 @@ class CandidateCreate(BaseModel):
     email: EmailStr
     phone: Optional[str]
     password: str
+    role: Optional[str] = "interviewee"  # interviewee | interviewer
 
 class CandidateLogin(BaseModel):
     email: EmailStr
@@ -17,6 +18,7 @@ class CandidateResponse(BaseModel):
     email: EmailStr
     phone: Optional[str]
     resume_text: Optional[str]
+    role: Optional[str] = "interviewee"
 
     class Config:
         orm_mode = True
