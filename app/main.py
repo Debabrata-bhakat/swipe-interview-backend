@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.routers import auth, candidate, interview
+from app.routers import auth, candidate, interview, interviewer
 from app.database import Base, engine
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -36,6 +36,7 @@ app.add_middleware(
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(candidate.router, prefix="/api/candidate", tags=["candidate"])
 app.include_router(interview.router, prefix="/api/interview", tags=["interview"])
+app.include_router(interviewer.router, prefix="/api/interviewer", tags=["interviewer"])
 
 @app.get("/")
 def root():
