@@ -4,10 +4,15 @@ from app import database, models, schemas
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 import PyPDF2, docx
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
-SECRET_KEY = "YOUR_SECRET_KEY"
+SECRET_KEY = os.getenv("SECRET_KEY", "YOUR_SECRET_KEY")
 
 def get_current_candidate(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
     try:

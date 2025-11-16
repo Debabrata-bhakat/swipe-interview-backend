@@ -11,12 +11,16 @@ services:
     volumes:
       # Mount app directory for hot reload during development
       - ./app:/app/app
-      # Persist SQLite database
-      - ./swipe_interview.db:/app/swipe_interview.db
-      # Optional: Mount .env file if you create one
-      # - ./.env:/app/.env
+      # Mount .env file for database credentials
+      - ./.env:/app/.env
     environment:
-      # Override these in .env file or here
+      # Database credentials (loaded from .env)
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME:-postgres}
+      # JWT Configuration
       - SECRET_KEY=${SECRET_KEY:-YOUR_SECRET_KEY}
       - ALGORITHM=${ALGORITHM:-HS256}
       - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES:-60}

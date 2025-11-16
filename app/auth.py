@@ -2,10 +2,15 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
 import bcrypt
+import os
+from dotenv import load_dotenv
 
-SECRET_KEY = "YOUR_SECRET_KEY"  # Replace with strong secret in .env
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+# Load environment variables
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY", "YOUR_SECRET_KEY")  # Fallback for local dev
+ALGORITHM = os.getenv("ALGORITHM", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
