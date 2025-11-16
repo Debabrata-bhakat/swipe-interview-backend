@@ -7,8 +7,9 @@ def create_candidate(db: Session, candidate):
         name=candidate.name,
         email=candidate.email,
         phone=candidate.phone,
-        hashed_password=hashed_pwd
-    )
+        hashed_password=hashed_pwd,
+        role=candidate.role if hasattr(candidate, 'role') else "interviewee"
+    ) 
     db.add(db_candidate)
     db.commit()
     db.refresh(db_candidate)
